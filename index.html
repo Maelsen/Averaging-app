@@ -12,9 +12,9 @@
     header h1{font-size:1.2rem;margin:0}
     .card{background:var(--card);border-radius:16px;box-shadow:0 8px 24px rgba(0,0,0,.35);padding:16px;margin-bottom:12px;border:1px solid rgba(255,255,255,.06)}
     label{display:block;font-size:.85rem;color:var(--muted);margin-bottom:6px}
-    input,textarea,select{width:100%;box-sizing:border-box;border-radius:12px;border:1px solid rgba(255,255,255,.08);background:#0e131a;color:var(--text);padding:12px;outline:none;font-size:16px}
+    input,textarea{width:100%;box-sizing:border-box;border-radius:12px;border:1px solid rgba(255,255,255,.08);background:#0e131a;color:var(--text);padding:12px;outline:none;font-size:16px}
     textarea{min-height:88px}
-    input:focus,textarea:focus,select:focus{border-color:var(--accent);box-shadow:0 0 0 3px rgba(93,208,255,.15)}
+    input:focus,textarea:focus{border-color:var(--accent);box-shadow:0 0 0 3px rgba(93,208,255,.15)}
     .muted{color:var(--muted);font-size:.9rem}
     .btn{width:100%;padding:14px 16px;border-radius:12px;border:0;background:var(--accent);color:#001019;font-weight:700;margin-top:8px;cursor:pointer}
     .grid{display:grid;grid-template-columns:repeat(2,1fr);gap:12px;margin-top:12px}
@@ -22,10 +22,18 @@
     .metric .info{min-width:0}
     .metric .k{color:var(--muted);font-size:.8rem}
     .metric .v{font-size:1.05rem;font-weight:700;margin-top:2px;word-break:break-all}
-    .copy{flex:0 0 auto;border:1px solid rgba(255,255,255,.12);background:#0e131a;color:var(--text);border-radius:10px;padding:8px 10px;cursor:pointer}
-    .ok{color:#6ef797}.bad{color:#ff7b7b}
+    .copy{flex:0 0 auto;border:1px solid rgba(255,255,255,.12);background:#0e131a;color:#fff;border-radius:10px;padding:8px 10px;cursor:pointer}
     .footer{opacity:.7;font-size:.8rem;margin-top:10px}
     .hide{display:none !important}
+
+    /* Segmented control */
+    .seg{display:flex;gap:8px}
+    .seg button{
+      flex:1;border-radius:12px;border:1px solid rgba(255,255,255,.12);
+      background:#0e131a;color:#fff;padding:10px 12px;cursor:pointer;font-weight:600
+    }
+    .seg button.active{background:var(--accent);color:#001019;border-color:transparent}
+    .ok{color:#6ef797}.bad{color:#ff7b7b}
   </style>
 </head>
 <body>
@@ -40,10 +48,10 @@
     <!-- Modus & Risiko -->
     <div class="card">
       <label>Modus</label>
-      <select id="mode">
-        <option value="multi" selected>Multi (2 Limits, 50/50)</option>
-        <option value="single">Einzeln (1 Limit @ Entry, gesamte Menge)</option>
-      </select>
+      <div class="seg" id="modeSeg">
+        <button type="button" data-mode="multi" class="active">Multi (2 Limits)</button>
+        <button type="button" data-mode="single">Einzeln (1 Limit)</button>
+      </div>
       <div style="height:10px"></div>
       <label>Gewünschtes Risiko in $ <span class="muted">(bleibt gespeichert, bis du es änderst)</span></label>
       <input id="risk" type="number" inputmode="decimal" step="0.01" value="25" />
@@ -102,8 +110,17 @@ const RISK_KEY = 'averaging_risk_usd';
 const MODE_KEY = 'averaging_mode';
 function loadRisk(){ try{ const v = localStorage.getItem(RISK_KEY); if(v!==null){ document.getElementById('risk').value = v; } }catch(e){} }
 function saveRisk(){ try{ localStorage.setItem(RISK_KEY, String(document.getElementById('risk').value || '')); }catch(e){} }
-function loadMode(){ try{ const v = localStorage.getItem(MODE_KEY); if(v){ document.getElementById('mode').value = v; } }catch(e){} }
-function saveMode(){ try{ localStorage.setItem(MODE_KEY, document.getElementById('mode').value); }catch(e){} }
+function getMode(){ return document.querySelector('.seg button.active')?.dataset.mode || 'multi'; }
+function setMode(mode){
+  document.querySelectorAll('.seg button').forEach(b=> b.classList.toggle('active', b.dataset.mode===mode));
+  try{ localStorage.setItem(MODE_KEY, mode); }catch(e){}
+}
+function loadMode(){
+  try{
+    const v = localStorage.getItem(MODE_KEY);
+    if(v){ setMode(v); }
+  }catch(e){}
+}
 
 // ---------- Rechnen ----------
 function compute(entry, stop, risk, mode){
@@ -123,35 +140,36 @@ function compute(entry, stop, risk, mode){
   return { p1, p2, q1: totalQty/2, q2: totalQty/2 };
 }
 
-// ---------- Parser ----------
-function normalize(raw){ return raw.replace(/\n|\r/g,' ').replace(/,/g,' ').toLowerCase(); }
-function firstNumberAfterRaw(text, anchor){
-  const idx = text.indexOf(anchor);
-  if(idx === -1) return null;
-  for(let i=idx+anchor.length; i<text.length; i++){
-    const ch = text[i];
-    if((ch>='0'&&ch<='9') || ch==='.'){
-      let j=i; while(j<text.length && ((text[j]>='0'&&text[j]<='9')||text[j]==='.')) j++;
-      const raw = text.slice(i,j);
-      return { num: Number(raw), raw };
-    }
-  }
-  return null;
+// ---------- Parser (robust: entfernt Zero-Width u. Unicode-Space, nutzt Regex) ----------
+function sanitize(raw){
+  return raw
+    .replace(/[\u200B-\u200D\uFEFF]/g,'')     // Zero-width chars
+    .replace(/\s+/g,' ')                      // alle Whitespaces auf normales Space
+    .trim()
+    .toLowerCase();
 }
 function parseLine(raw){
   if(!raw) return null;
-  const s = normalize(raw);
-  let e = firstNumberAfterRaw(s, ' at ');
-  if(e===null) e = firstNumberAfterRaw(s, 'at ');
-  let slIndex = s.indexOf(' sl'); if(slIndex === -1) slIndex = s.indexOf(' sl:'); if(slIndex === -1) slIndex = s.indexOf(' sl;');
-  let stop = null;
-  if(slIndex !== -1){
-    const seg = s.slice(slIndex);
-    const ss = firstNumberAfterRaw(seg, 'sl') || firstNumberAfterRaw(seg, 'sl:') || firstNumberAfterRaw(seg, 'sl;');
-    if(ss) stop = ss.num;
-  }
-  if(!e || !(e.num>0) || !(stop>0)) return null;
-  return { entry: e.num, entryDecimals: countDecimalsFromRaw(e.raw), stop };
+  const s = sanitize(raw);
+
+  // entry: ... at <number>
+  const reEntry = /(?:^|\\s)at\\s*([0-9]*\\.?[0-9]+)/i;
+  const mE = s.match(reEntry);
+
+  // stop: sl[:;]? <number>
+  const reSL = /(?:^|\\s)sl\\s*[:;]?\\s*([0-9]*\\.?[0-9]+)/i;
+  const mS = s.match(reSL);
+
+  if(!mE || !mS) return null;
+  const entryNum = Number(mE[1]);
+  const stopNum  = Number(mS[1]);
+  if(!(entryNum>0 && stopNum>0)) return null;
+
+  // Dezimalstellen vom Entry aus Original (nicht zwingend nötig, aber hübsch)
+  const entryRawMatch = /([0-9]*\\.?[0-9]+)/.exec(mE[1]);
+  const decs = countDecimalsFromRaw(entryRawMatch ? entryRawMatch[0] : mE[1]);
+
+  return { entry: entryNum, entryDecimals: decs, stop: stopNum };
 }
 
 // ---------- Render ----------
@@ -166,11 +184,9 @@ function render(res, decimals, stop, mode){
 
   let out = '';
   if(mode === 'single'){
-    // hide second line
     rowP2.classList.add('hide'); rowQ2.classList.add('hide');
     out = `LIMIT: Preis ${p1}, Menge ${q1}\nStop-Loss: ${fmtPriceByDecimals(stop, decimals)}`;
   }else{
-    // show second line
     rowP2.classList.remove('hide'); rowQ2.classList.remove('hide');
     const p2 = fmtPriceByDecimals(res.p2, decimals);
     const q2 = fmtQtySmart(res.q2);
@@ -181,12 +197,12 @@ function render(res, decimals, stop, mode){
   document.getElementById('out').value = out;
 }
 
-// ---------- UI Handlers ----------
+// ---------- UI ----------
 function handleParse(){
-  saveRisk(); saveMode();
+  saveRisk();
   const status = document.getElementById('parse_status');
   const raw = document.getElementById('paste').value;
-  const mode = document.getElementById('mode').value;
+  const mode = getMode();
   const parsed = parseLine(raw);
   if(!parsed){ status.textContent = 'Konnte Entry/SL nicht erkennen.'; status.className = 'muted bad'; return; }
   status.textContent = `Erkannt: Entry ${parsed.entry} · SL ${parsed.stop} · Modus: ${mode}`; status.className = 'muted ok';
@@ -196,32 +212,36 @@ function handleParse(){
   render(res, parsed.entryDecimals, parsed.stop, mode);
 }
 
-// Copy buttons (after DOM ready)
 function wireCopyButtons(){
   document.getElementById('copy_all').addEventListener('click', async ()=>{
     try{ await navigator.clipboard.writeText(document.getElementById('out').value); }catch(e){}
   });
-  for (const btn of document.querySelectorAll('.copy')){
+  document.querySelectorAll('.copy').forEach(btn=>{
     btn.addEventListener('click', ()=> copyTextFromEl(btn.getAttribute('data-copy')) );
-  }
+  });
 }
-
-// Enter in paste field triggers parse
 function wireEnterShortcut(){
   const pasteEl = document.getElementById('paste');
   pasteEl.addEventListener('keydown', (e)=>{
     if(e.key==='Enter' && (e.metaKey||e.ctrlKey||!e.shiftKey)){ e.preventDefault(); handleParse(); }
   });
 }
+function wireModeButtons(){
+  const seg = document.getElementById('modeSeg');
+  seg.addEventListener('click', (e)=>{
+    const b = e.target.closest('button[data-mode]'); if(!b) return;
+    setMode(b.dataset.mode);
+  });
+}
 
 // init
 window.addEventListener('load', ()=>{
   loadRisk(); loadMode();
-  document.getElementById('mode').addEventListener('change', saveMode);
   document.getElementById('risk').addEventListener('change', saveRisk);
   document.getElementById('parse').addEventListener('click', handleParse);
   wireCopyButtons();
   wireEnterShortcut();
+  wireModeButtons();
 });
 </script>
 </body>
