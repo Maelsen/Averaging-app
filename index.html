@@ -13,17 +13,21 @@
     .card{background:var(--card);border-radius:16px;box-shadow:0 8px 24px rgba(0,0,0,.35);padding:16px;margin-bottom:12px;border:1px solid rgba(255,255,255,.06)}
     .row{display:grid;grid-template-columns:1fr 1fr;gap:12px}
     label{display:block;font-size:.85rem;color:var(--muted);margin-bottom:6px}
-    input{width:100%;box-sizing:border-box;border-radius:12px;border:1px solid rgba(255,255,255,.08);background:#0e131a;color:var(--text);padding:12px;outline:none}
-    input:focus{border-color:var(--accent);box-shadow:0 0 0 3px rgba(93,208,255,.15)}
+    input,textarea{width:100%;box-sizing:border-box;border-radius:12px;border:1px solid rgba(255,255,255,.08);background:#0e131a;color:var(--text);padding:12px;outline:none}
+    textarea{min-height:88px}
+    input:focus,textarea:focus{border-color:var(--accent);box-shadow:0 0 0 3px rgba(93,208,255,.15)}
     .muted{color:var(--muted);font-size:.9rem}
     .btn{width:100%;padding:14px 16px;border-radius:12px;border:0;background:var(--accent);color:#001019;font-weight:700;margin-top:8px;cursor:pointer}
     .grid{display:grid;grid-template-columns:repeat(3,1fr);gap:12px}
     .metric{background:#0f141b;border:1px solid rgba(255,255,255,.06);border-radius:14px;padding:12px}
     .metric .k{color:var(--muted);font-size:.8rem}
     .metric .v{font-size:1.05rem;font-weight:700;margin-top:2px}
-    textarea{width:100%;min-height:120px;box-sizing:border-box;border-radius:12px;border:1px solid rgba(255,255,255,.08);background:#0e131a;color:var(--text);padding:12px}
     .hint{font-size:.85rem;color:var(--muted)}
     .footer{opacity:.7;font-size:.8rem;margin-top:10px}
+    .inline{display:flex;gap:8px;align-items:center}
+    .inline input{flex:1}
+    .ok{color:#6ef797}
+    .bad{color:#ff7b7b}
   </style>
 </head>
 <body>
@@ -34,6 +38,17 @@
       </svg>
       <h1>Averaging‑Rechner (50/50 @ Entry & Entry+0,5%)</h1>
     </header>
+
+    <!-- QUICK PASTE PARSER -->
+    <div class="card">
+      <label>Discord-/Chat‑Zeile einfügen (wir erkennen nur Entry & SL, Rest wird ignoriert)</label>
+      <textarea id="paste" placeholder="z. B.: @user longed COAI at 0.4156 sl: 0.388 (1% risk)"></textarea>
+      <div class="inline">
+        <button class="btn" id="parse">Parsen & Berechnen</button>
+        <span id="parse_status" class="muted"></span>
+      </div>
+      <p class="hint">Wir erkennen flexibel <b>at &lt;preis&gt;</b> und <b>sl: &lt;preis&gt;</b> bzw. <b>sl; &lt;preis&gt;</b>. Beispiel: <code>longed jelly at 0.061579 sl; 0.05783</code></p>
+    </div>
 
     <div class="card">
       <div class="row">
@@ -48,7 +63,7 @@
       </div>
       <div class="row" style="margin-top:12px">
         <div>
-          <label>Gewünschtes Risiko ($)</label>
+          <label>Gewünschtes Risiko ($) <span class="muted">(wird lokal gespeichert)</span></label>
           <input id="risk" type="number" step="0.01" value="25" />
         </div>
         <div>
@@ -97,6 +112,15 @@ function roundToStep(x, step, dir){
   return Math.round(k) * step;
 }
 
+// Persistiere Risiko lokal
+const RISK_KEY = 'averaging_risk_usd';
+function loadRisk(){
+  try{ const v = localStorage.getItem(RISK_KEY); if(v!==null){ document.getElementById('risk').value = v; } }catch(e){}
+}
+function saveRisk(){
+  try{ localStorage.setItem(RISK_KEY, String(document.getElementById('risk').value || '')); }catch(e){}
+}
+
 function calc(){
   const entry = Number(document.getElementById('entry').value);
   const stop  = Number(document.getElementById('stop').value);
@@ -142,16 +166,83 @@ function calc(){
   document.getElementById('m_q2').textContent = fmt(q2);
   document.getElementById('m_avg_eff').textContent = fmt(avgEff);
 
-  const txt = `LIMIT #1: Preis ${fmt(price1)}, Menge ${fmt(q1)}\n`+
-              `LIMIT #2: Preis ${fmt(price2)}, Menge ${fmt(q2)}\n`+
-              `Stop-Loss: ${fmt(stop)}\n`+
-              `Ø Entry (Soll): ${fmt(avg)} | Ø Entry (effektiv): ${fmt(avgEff)}\n`+
+  const txt = `LIMIT #1: Preis ${fmt(price1)}, Menge ${fmt(q1)}
+`+
+              `LIMIT #2: Preis ${fmt(price2)}, Menge ${fmt(q2)}
+`+
+              `Stop-Loss: ${fmt(stop)}
+`+
+              `Ø Entry (Soll): ${fmt(avg)} | Ø Entry (effektiv): ${fmt(avgEff)}
+`+
               `Geschätztes Risiko: $${effRisk.toFixed(2)}`;
   document.getElementById('out').value = txt;
 }
 
-document.getElementById('calc').addEventListener('click', calc);
-window.addEventListener('load', calc);
+// Parser ohne Regex-Sonderzeichen (robust gegen Formatvarianten)
+function firstNumberAfter(text, anchor){
+  const idx = text.indexOf(anchor);
+  if(idx === -1) return null;
+  for(let i=idx+anchor.length; i<text.length; i++){
+    const ch = text[i];
+    if((ch>='0'&&ch<='9') || ch==='.'){
+      let j=i;
+      while(j<text.length && (((text[j]>='0'&&text[j]<='9')||text[j]==='.') )) j++;
+      return Number(text.slice(i,j));
+    }
+  }
+  return null;
+}
+
+function normalize(raw){
+  return raw.replace(/
+|
+/g,' ').replace(/,/g,' ').toLowerCase();
+}
+
+function parseLine(raw){
+  if(!raw) return null;
+  const s = normalize(raw);
+  // Entry nach " at "
+  let entry = firstNumberAfter(s, ' at ');
+  if(entry===null){ // fallback: 'at' ohne Spaces
+    entry = firstNumberAfter(s, 'at ');
+  }
+  // Stop nach " sl" (mit optional : oder ; )
+  let slIndex = s.indexOf(' sl');
+  if(slIndex === -1) slIndex = s.indexOf(' sl:');
+  if(slIndex === -1) slIndex = s.indexOf(' sl;');
+  let stop = null;
+  if(slIndex !== -1){
+    stop = firstNumberAfter(s.slice(slIndex), 'sl');
+    if(stop===null) stop = firstNumberAfter(s.slice(slIndex), 'sl:');
+    if(stop===null) stop = firstNumberAfter(s.slice(slIndex), 'sl;');
+  }
+  if(!(entry>0 && stop>0)) return null;
+  return { entry, stop };
+}
+
+function handleParse(){
+  const status = document.getElementById('parse_status');
+  const raw = document.getElementById('paste').value;
+  const res = parseLine(raw);
+  if(!res){
+    status.textContent = 'Konnte Entry/SL nicht erkennen.';
+    status.className = 'muted bad';
+    return;
+  }
+  document.getElementById('entry').value = res.entry;
+  document.getElementById('stop').value  = res.stop;
+  status.textContent = `Erkannt: Entry ${res.entry} · SL ${res.stop}`;
+  status.className = 'muted ok';
+  calc();
+}
+
+document.getElementById('calc').addEventListener('click', ()=>{ saveRisk(); calc(); });
+
+document.getElementById('parse').addEventListener('click', handleParse);
+
+window.addEventListener('load', ()=>{ loadRisk(); calc(); });
 </script>
 </body>
 </html>
+
