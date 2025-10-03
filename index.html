@@ -115,7 +115,9 @@ function compute(entry, stop, risk){
 }
 
 // Parser
-function normalize(raw){ return raw.replace(/\n|\r/g,' ').replace(/,/g,' ').toLowerCase(); }
+function normalize(raw){ return raw.replace(/
+|
+/g,' ').replace(/,/g,' ').toLowerCase(); }
 function firstNumberAfterRaw(text, anchor){
   const idx = text.indexOf(anchor);
   if(idx === -1) return null;
@@ -155,8 +157,10 @@ function render(res, decimals, stop){
   document.getElementById('m_p2').textContent = p2;
   document.getElementById('m_q1').textContent = q1;
   document.getElementById('m_q2').textContent = q2;
-  const out = `LIMIT #1: Preis ${p1}, Menge ${q1}\n`+
-              `LIMIT #2: Preis ${p2}, Menge ${q2}\n`+
+  const out = `LIMIT #1: Preis ${p1}, Menge ${q1}
+`+
+              `LIMIT #2: Preis ${p2}, Menge ${q2}
+`+
               `Stop-Loss: ${fmtPriceByDecimals(stop, decimals)}`;
   document.getElementById('out').value = out;
 }
@@ -190,7 +194,7 @@ pasteEl.addEventListener('keydown', (e)=>{ if(e.key==='Enter' && (e.metaKey||e.c
 document.getElementById('parse').addEventListener('click', handleParse);
 
 // init
-window.addEventListener('load', ()=>{ loadRisk(); });
+window.addEventListener('load', ()=>{ loadRisk(); loadMode(); });
 </script>
 </body>
 </html>
