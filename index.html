@@ -6,12 +6,11 @@
   <title>Averaging-Rechner</title>
   <style>
     :root { --bg:#0b0f14; --card:#121820; --muted:#8aa0b2; --text:#eaf2f9; --accent:#5dd0ff; }
-    html,body{margin:0;height:100%;background:var(--bg);color:var(--text);font:16px/1.4 system-ui, -apple-system, Segoe UI, Roboto, Ubuntu, Cantarell, Noto Sans, Helvetica, Arial;}
-    .wrap{max-width:680px;margin:0 auto;padding:16px;}
+    html,body{margin:0;height:100%;background:var(--bg);color:var(--text);font:16px/1.4 system-ui,-apple-system,Segoe UI,Roboto,Ubuntu,Cantarell,Noto Sans,Helvetica,Arial}
+    .wrap{max-width:680px;margin:0 auto;padding:16px}
     header{display:flex;align-items:center;gap:10px;margin:8px 0 16px}
     header h1{font-size:1.2rem;margin:0}
     .card{background:var(--card);border-radius:16px;box-shadow:0 8px 24px rgba(0,0,0,.35);padding:16px;margin-bottom:12px;border:1px solid rgba(255,255,255,.06)}
-    .row{display:grid;grid-template-columns:1fr 1fr;gap:12px}
     label{display:block;font-size:.85rem;color:var(--muted);margin-bottom:6px}
     input,textarea{width:100%;box-sizing:border-box;border-radius:12px;border:1px solid rgba(255,255,255,.08);background:#0e131a;color:var(--text);padding:12px;outline:none}
     textarea{min-height:88px}
@@ -22,12 +21,9 @@
     .metric{background:#0f141b;border:1px solid rgba(255,255,255,.06);border-radius:14px;padding:12px}
     .metric .k{color:var(--muted);font-size:.8rem}
     .metric .v{font-size:1.05rem;font-weight:700;margin-top:2px}
-    .hint{font-size:.85rem;color:var(--muted)}
-    .footer{opacity:.7;font-size:.8rem;margin-top:10px}
-    .inline{display:flex;gap:8px;align-items:center}
-    .inline input{flex:1}
     .ok{color:#6ef797}
     .bad{color:#ff7b7b}
+    .footer{opacity:.7;font-size:.8rem;margin-top:10px}
   </style>
 </head>
 <body>
@@ -39,50 +35,19 @@
       <h1>Averaging‑Rechner (50/50 @ Entry & Entry+0,5%)</h1>
     </header>
 
+    <!-- Risiko (persistiert) -->
+    <div class="card">
+      <label>Gewünschtes Risiko in $ <span class="muted">(bleibt gespeichert, bis du es änderst)</span></label>
+      <input id="risk" type="number" step="0.01" value="25" />
+    </div>
+
     <!-- QUICK PASTE PARSER -->
     <div class="card">
       <label>Discord-/Chat‑Zeile einfügen (wir erkennen nur Entry & SL, Rest wird ignoriert)</label>
       <textarea id="paste" placeholder="z. B.: @user longed COAI at 0.4156 sl: 0.388 (1% risk)"></textarea>
-      <div class="inline">
-        <button class="btn" id="parse">Parsen & Berechnen</button>
-        <span id="parse_status" class="muted"></span>
-      </div>
-      <p class="hint">Wir erkennen flexibel <b>at &lt;preis&gt;</b> und <b>sl: &lt;preis&gt;</b> bzw. <b>sl; &lt;preis&gt;</b>. Beispiel: <code>longed jelly at 0.061579 sl; 0.05783</code></p>
-    </div>
-
-    <div class="card">
-      <div class="row">
-        <div>
-          <label>Entry‑Preis</label>
-          <input id="entry" type="number" step="0.00000001" value="100" />
-        </div>
-        <div>
-          <label>Stop‑Loss‑Preis</label>
-          <input id="stop" type="number" step="0.00000001" value="95" />
-        </div>
-      </div>
-      <div class="row" style="margin-top:12px">
-        <div>
-          <label>Gewünschtes Risiko ($) <span class="muted">(wird lokal gespeichert)</span></label>
-          <input id="risk" type="number" step="0.01" value="25" />
-        </div>
-        <div>
-          <label>Gebührensatz (%) pro Seite (optional)</label>
-          <input id="fee" type="number" step="0.0001" value="0" />
-        </div>
-      </div>
-      <div class="row" style="margin-top:12px">
-        <div>
-          <label>Tick Size (Preis‑Raster, optional)</label>
-          <input id="tick" type="number" step="0.00000001" value="0" />
-        </div>
-        <div>
-          <label>Lot Size (Mengen‑Raster, optional)</label>
-          <input id="lot" type="number" step="0.00000001" value="0" />
-        </div>
-      </div>
-      <button class="btn" id="calc">Berechnen</button>
-      <p class="hint">Long‑Logik: 50% bei Entry, 50% bei Entry × 1,005 → Ø‑Entry (Soll) = Entry × 1,0025.</p>
+      <button class="btn" id="parse">Parsen & Berechnen</button>
+      <p id="parse_status" class="muted"></p>
+      <p class="muted">Erkennung akzeptiert <b>sl:</b> und <b>sl;</b>. Beispiel: <code>longed jelly at 0.061579 sl; 0.05783</code></p>
     </div>
 
     <div class="grid">
@@ -97,117 +62,52 @@
     <div class="card">
       <label>Order‑Details (zum Kopieren)</label>
       <textarea id="out" readonly></textarea>
-      <p class="footer">Hinweis: Vereinfachtes Modell (keine Slippage/Funding/Partials &neq; 50/50). Runde Tick/Lot passend zu deiner Börse.</p>
+      <p class="footer">Hinweis: Vereinfachtes Modell (keine Slippage/Funding/Partials ≠ 50/50).</p>
     </div>
   </div>
 
 <script>
 function fmt(n, d=8){ return Number(n).toFixed(d); }
-function roundToStep(x, step, dir){
-  step = Number(step);
-  if (!step || step <= 0) return x;
-  const k = x / step;
-  if (dir === 'up') return Math.ceil(k - 1e-12) * step;
-  if (dir === 'down') return Math.floor(k + 1e-12) * step;
-  return Math.round(k) * step;
-}
 
-// Persistiere Risiko lokal
+// Risiko lokal persistieren
 const RISK_KEY = 'averaging_risk_usd';
-function loadRisk(){
-  try{ const v = localStorage.getItem(RISK_KEY); if(v!==null){ document.getElementById('risk').value = v; } }catch(e){}
-}
-function saveRisk(){
-  try{ localStorage.setItem(RISK_KEY, String(document.getElementById('risk').value || '')); }catch(e){}
-}
+function loadRisk(){ try{ const v = localStorage.getItem(RISK_KEY); if(v!==null){ document.getElementById('risk').value = v; } }catch(e){} }
+function saveRisk(){ try{ localStorage.setItem(RISK_KEY, String(document.getElementById('risk').value || '')); }catch(e){} }
 
-function calc(){
-  const entry = Number(document.getElementById('entry').value);
-  const stop  = Number(document.getElementById('stop').value);
-  const risk  = Number(document.getElementById('risk').value);
-  const feePct= Number(document.getElementById('fee').value)/100;
-  const tick  = Number(document.getElementById('tick').value);
-  const lot   = Number(document.getElementById('lot').value);
-
-  if(!(entry>0 && stop>0 && risk>0)){
-    alert('Bitte gültige, positive Werte eingeben.');
-    return;
-  }
-
+// Core-Berechnung (ohne Gebühren/Raster): 50% @ entry, 50% @ entry*1.005
+function compute(entry, stop, risk){
   const p1 = entry;
   const p2 = entry * 1.005;
   const avg = entry * 1.0025;
-
-  // simple fee impact estimate: (avg entry for entries + stop) * fee rate
-  const feeImpact = feePct>0 ? (((p1+p2)/2 + stop) * feePct) : 0;
-  let riskPerUnit = Math.max(avg - stop, 0) + feeImpact;
-  if(riskPerUnit<=0){ alert('Stop muss unter dem Ø‑Entry liegen.'); return; }
-
+  const riskPerUnit = Math.max(avg - stop, 0);
+  if(!(riskPerUnit>0)) return null;
   const totalQty = risk / riskPerUnit;
-  let q1 = totalQty/2, q2 = totalQty/2;
-  q1 = roundToStep(q1, lot, 'down');
-  q2 = roundToStep(q2, lot, 'down');
-
-  let price1 = roundToStep(p1, tick);
-  let price2 = roundToStep(p2, tick);
-
-  const not1 = price1 * q1, not2 = price2 * q2;
-  const effQty = (q1+q2)>0 ? (q1+q2) : 1e-12;
-  const avgEff = (not1+not2) / effQty;
-
-  const feeImpactEst = feePct>0 ? (((price1+price2)/2 + stop) * feePct) : 0;
-  const effRiskPerUnit = Math.max(avgEff - stop, 0) + feeImpactEst;
-  const effRisk = effRiskPerUnit * (q1+q2);
-
-  document.getElementById('m_p1').textContent = fmt(price1);
-  document.getElementById('m_p2').textContent = fmt(price2);
-  document.getElementById('m_avg').textContent = fmt(avg);
-  document.getElementById('m_q1').textContent = fmt(q1);
-  document.getElementById('m_q2').textContent = fmt(q2);
-  document.getElementById('m_avg_eff').textContent = fmt(avgEff);
-
-  const txt = `LIMIT #1: Preis ${fmt(price1)}, Menge ${fmt(q1)}
-`+
-              `LIMIT #2: Preis ${fmt(price2)}, Menge ${fmt(q2)}
-`+
-              `Stop-Loss: ${fmt(stop)}
-`+
-              `Ø Entry (Soll): ${fmt(avg)} | Ø Entry (effektiv): ${fmt(avgEff)}
-`+
-              `Geschätztes Risiko: $${effRisk.toFixed(2)}`;
-  document.getElementById('out').value = txt;
+  const q1 = totalQty / 2;
+  const q2 = totalQty / 2;
+  const not1 = p1 * q1, not2 = p2 * q2;
+  const avgEff = (not1 + not2) / (q1 + q2);
+  return { p1, p2, avg, q1, q2, avgEff, totalQty };
 }
 
-// Parser ohne Regex-Sonderzeichen (robust gegen Formatvarianten)
+// Parser
+function normalize(raw){ return raw.replace(/\n|\r/g,' ').replace(/,/g,' ').toLowerCase(); }
 function firstNumberAfter(text, anchor){
   const idx = text.indexOf(anchor);
   if(idx === -1) return null;
   for(let i=idx+anchor.length; i<text.length; i++){
     const ch = text[i];
     if((ch>='0'&&ch<='9') || ch==='.'){
-      let j=i;
-      while(j<text.length && (((text[j]>='0'&&text[j]<='9')||text[j]==='.') )) j++;
+      let j=i; while(j<text.length && ((text[j]>='0'&&text[j]<='9')||text[j]==='.')) j++;
       return Number(text.slice(i,j));
     }
   }
   return null;
 }
-
-function normalize(raw){
-  return raw.replace(/
-|
-/g,' ').replace(/,/g,' ').toLowerCase();
-}
-
 function parseLine(raw){
   if(!raw) return null;
   const s = normalize(raw);
-  // Entry nach " at "
   let entry = firstNumberAfter(s, ' at ');
-  if(entry===null){ // fallback: 'at' ohne Spaces
-    entry = firstNumberAfter(s, 'at ');
-  }
-  // Stop nach " sl" (mit optional : oder ; )
+  if(entry===null) entry = firstNumberAfter(s, 'at ');
   let slIndex = s.indexOf(' sl');
   if(slIndex === -1) slIndex = s.indexOf(' sl:');
   if(slIndex === -1) slIndex = s.indexOf(' sl;');
@@ -221,28 +121,41 @@ function parseLine(raw){
   return { entry, stop };
 }
 
-function handleParse(){
-  const status = document.getElementById('parse_status');
-  const raw = document.getElementById('paste').value;
-  const res = parseLine(raw);
-  if(!res){
-    status.textContent = 'Konnte Entry/SL nicht erkennen.';
-    status.className = 'muted bad';
-    return;
-  }
-  document.getElementById('entry').value = res.entry;
-  document.getElementById('stop').value  = res.stop;
-  status.textContent = `Erkannt: Entry ${res.entry} · SL ${res.stop}`;
-  status.className = 'muted ok';
-  calc();
+function render(res){
+  document.getElementById('m_p1').textContent = fmt(res.p1);
+  document.getElementById('m_p2').textContent = fmt(res.p2);
+  document.getElementById('m_avg').textContent = fmt(res.avg);
+  document.getElementById('m_q1').textContent = fmt(res.q1);
+  document.getElementById('m_q2').textContent = fmt(res.q2);
+  document.getElementById('m_avg_eff').textContent = fmt(res.avgEff);
+  const out = `LIMIT #1: Preis ${fmt(res.p1)}, Menge ${fmt(res.q1)}\n`+
+              `LIMIT #2: Preis ${fmt(res.p2)}, Menge ${fmt(res.q2)}\n`+
+              `Stop-Loss: — (aus Paste)\n`+
+              `Ø Entry (Soll): ${fmt(res.avg)} | Ø Entry (effektiv): ${fmt(res.avgEff)}`;
+  document.getElementById('out').value = out;
 }
 
-document.getElementById('calc').addEventListener('click', ()=>{ saveRisk(); calc(); });
+function handleParse(){
+  saveRisk();
+  const status = document.getElementById('parse_status');
+  const raw = document.getElementById('paste').value;
+  const parsed = parseLine(raw);
+  if(!parsed){ status.textContent = 'Konnte Entry/SL nicht erkennen.'; status.className = 'muted bad'; return; }
+  status.textContent = `Erkannt: Entry ${parsed.entry} · SL ${parsed.stop}`; status.className = 'muted ok';
+  const risk = Number(document.getElementById('risk').value || '0');
+  const res = compute(parsed.entry, parsed.stop, risk);
+  if(!res){ status.textContent += ' · (Stop liegt nicht unter Ø‑Entry)'; return; }
+  render(res);
+}
+
+// UX: Enter im Paste-Feld triggert sofort Parse
+const pasteEl = document.getElementById('paste');
+pasteEl.addEventListener('keydown', (e)=>{ if(e.key==='Enter' && (e.metaKey||e.ctrlKey||!e.shiftKey)){ e.preventDefault(); handleParse(); } });
 
 document.getElementById('parse').addEventListener('click', handleParse);
 
-window.addEventListener('load', ()=>{ loadRisk(); calc(); });
+// init
+window.addEventListener('load', ()=>{ loadRisk(); });
 </script>
 </body>
 </html>
-
