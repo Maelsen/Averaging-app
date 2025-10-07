@@ -34,7 +34,7 @@
       <svg width="28" height="28" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
         <path d="M3 3v18h18" stroke="#5dd0ff" stroke-width="2"/><path d="M5 15l4-6 4 3 4-6 3 5" stroke="#5dd0ff" stroke-width="2" fill="none"/>
       </svg>
-      <h1>Averaging‑Rechner (50/50 @ Entry & Entry+0,5%)</h1>
+      <h1>Averaging-Rechner (50/50 @ Entry & Entry+0,5%)</h1>
     </header>
 
     <!-- Risiko (persistiert) -->
@@ -45,24 +45,24 @@
 
     <!-- QUICK PASTE PARSER -->
     <div class="card">
-      <label>Discord-/Chat‑Zeile einfügen (wir erkennen nur Entry & SL, Rest wird ignoriert)</label>
-      <textarea id="paste" placeholder="z. B.: @user longed COAI at 0.4156 sl: 0.388 (1% risk)"></textarea>
-      <button class="btn" id="parse">Parsen & Berechnen</button>
+      <label>Discord-/Chat-Zeile einfügen (wir erkennen nur Entry & SL, Rest wird ignoriert)</label>
+      <textarea id="paste" placeholder="z. B.: @user longed COAI at 0.4156 sl: 0.388 (1% risk)"></textarea>
+      <button class="btn" id="parse" type="button">Parsen & Berechnen</button>
       <p id="parse_status" class="muted"></p>
       <p class="muted">Erkennung akzeptiert <b>sl:</b> und <b>sl;</b>. Beispiel: <code>longed jelly at 0.061579 sl; 0.05783</code></p>
     </div>
 
     <div class="grid">
-      <div class="metric"><div class="info"><div class="k">Limit #1 Preis</div><div class="v" id="m_p1">–</div></div><button class="copy" data-copy="m_p1">Kopieren</button></div>
-      <div class="metric"><div class="info"><div class="k">Qty #1</div><div class="v" id="m_q1">–</div></div><button class="copy" data-copy="m_q1">Kopieren</button></div>
-      <div class="metric"><div class="info"><div class="k">Limit #2 Preis</div><div class="v" id="m_p2">–</div></div><button class="copy" data-copy="m_p2">Kopieren</button></div>
-      <div class="metric"><div class="info"><div class="k">Qty #2</div><div class="v" id="m_q2">–</div></div><button class="copy" data-copy="m_q2">Kopieren</button></div>
+      <div class="metric"><div class="info"><div class="k">Limit #1 Preis</div><div class="v" id="m_p1">–</div></div><button class="copy" data-copy="m_p1" type="button">Kopieren</button></div>
+      <div class="metric"><div class="info"><div class="k">Qty #1</div><div class="v" id="m_q1">–</div></div><button class="copy" data-copy="m_q1" type="button">Kopieren</button></div>
+      <div class="metric"><div class="info"><div class="k">Limit #2 Preis</div><div class="v" id="m_p2">–</div></div><button class="copy" data-copy="m_p2" type="button">Kopieren</button></div>
+      <div class="metric"><div class="info"><div class="k">Qty #2</div><div class="v" id="m_q2">–</div></div><button class="copy" data-copy="m_q2" type="button">Kopieren</button></div>
     </div>
 
     <div class="card">
-      <label>Order‑Details (zum Kopieren)</label>
+      <label>Order-Details (zum Kopieren)</label>
       <textarea id="out" readonly></textarea>
-      <button class="btn" id="copy_all">Alles kopieren</button>
+      <button class="btn" id="copy_all" type="button">Alles kopieren</button>
       <p class="footer">Hinweis: Vereinfachtes Modell (keine Slippage/Funding/Partials ≠ 50/50).</p>
     </div>
   </div>
@@ -90,7 +90,9 @@ function fmtQtySmart(q){
 async function copyText(id){
   const el = document.getElementById(id);
   const txt = el ? el.textContent : '';
-  try{ await navigator.clipboard.writeText(txt); }catch(e){
+  try{
+    await navigator.clipboard.writeText(txt);
+  }catch(e){
     const ta = document.createElement('textarea');
     ta.value = txt; document.body.appendChild(ta); ta.select(); document.execCommand('copy'); ta.remove();
   }
@@ -98,8 +100,17 @@ async function copyText(id){
 
 // Risiko lokal persistieren
 const RISK_KEY = 'averaging_risk_usd';
-function loadRisk(){ try{ const v = localStorage.getItem(RISK_KEY); if(v!==null){ document.getElementById('risk').value = v; } }catch(e){} }
-function saveRisk(){ try{ localStorage.setItem(RISK_KEY, String(document.getElementById('risk').value || '')); }catch(e){} }
+function loadRisk(){
+  try{
+    const v = localStorage.getItem(RISK_KEY);
+    if(v!==null){ document.getElementById('risk').value = v; }
+  }catch(e){}
+}
+function saveRisk(){
+  try{
+    localStorage.setItem(RISK_KEY, String(document.getElementById('risk').value || ''));
+  }catch(e){}
+}
 
 // Core-Berechnung (50% @ entry, 50% @ entry*1.005)
 function compute(entry, stop, risk){
@@ -115,22 +126,29 @@ function compute(entry, stop, risk){
 }
 
 // Parser
-function normalize(raw){ return raw.replace(/
-|
-/g,' ').replace(/,/g,' ').toLowerCase(); }
+function normalize(raw){
+  // \n/\r entfernen, deutsches Dezimal-Komma in Punkt umwandeln, in Kleinbuchstaben
+  return raw
+    .replace(/[\n\r]+/g, ' ')
+    .replace(/,/g, '.')
+    .toLowerCase();
+}
+
 function firstNumberAfterRaw(text, anchor){
   const idx = text.indexOf(anchor);
   if(idx === -1) return null;
   for(let i=idx+anchor.length; i<text.length; i++){
     const ch = text[i];
     if((ch>='0'&&ch<='9') || ch==='.'){
-      let j=i; while(j<text.length && ((text[j]>='0'&&text[j]<='9')||text[j]==='.')) j++;
+      let j=i;
+      while(j<text.length && ((text[j]>='0'&&text[j]<='9')||text[j]==='.')) j++;
       const raw = text.slice(i,j);
       return { num: Number(raw), raw };
     }
   }
   return null;
 }
+
 function parseLine(raw){
   if(!raw) return null;
   const s = normalize(raw);
@@ -141,16 +159,23 @@ function parseLine(raw){
   if(slIndex === -1) slIndex = s.indexOf(' sl;');
   let stop = null;
   if(slIndex !== -1){
-    const ss = firstNumberAfterRaw(s.slice(slIndex), 'sl') || firstNumberAfterRaw(s.slice(slIndex), 'sl:') || firstNumberAfterRaw(s.slice(slIndex), 'sl;');
+    const tail = s.slice(slIndex);
+    const ss = firstNumberAfterRaw(tail, 'sl') || firstNumberAfterRaw(tail, 'sl:') || firstNumberAfterRaw(tail, 'sl;');
     if(ss) stop = ss.num;
   }
   if(!e || !(e.num>0) || !(stop>0)) return null;
   return { entry: e.num, entryDecimals: countDecimalsFromRaw(e.raw), stop };
 }
 
+function fmtPriceSafe(n, decimals){
+  // Fallback, falls decimals 0 ist
+  const d = Number.isFinite(decimals) ? decimals : 6;
+  return Number(n).toFixed(d);
+}
+
 function render(res, decimals, stop){
-  const p1 = fmtPriceByDecimals(res.p1, decimals);
-  const p2 = fmtPriceByDecimals(res.p2, decimals);
+  const p1 = fmtPriceSafe(res.p1, decimals);
+  const p2 = fmtPriceSafe(res.p2, decimals);
   const q1 = fmtQtySmart(res.q1);
   const q2 = fmtQtySmart(res.q2);
   document.getElementById('m_p1').textContent = p1;
@@ -158,10 +183,8 @@ function render(res, decimals, stop){
   document.getElementById('m_q1').textContent = q1;
   document.getElementById('m_q2').textContent = q2;
   const out = `LIMIT #1: Preis ${p1}, Menge ${q1}
-`+
-              `LIMIT #2: Preis ${p2}, Menge ${q2}
-`+
-              `Stop-Loss: ${fmtPriceByDecimals(stop, decimals)}`;
+LIMIT #2: Preis ${p2}, Menge ${q2}
+Stop-Loss: ${fmtPriceSafe(stop, decimals)}`;
   document.getElementById('out').value = out;
 }
 
@@ -170,11 +193,19 @@ function handleParse(){
   const status = document.getElementById('parse_status');
   const raw = document.getElementById('paste').value;
   const parsed = parseLine(raw);
-  if(!parsed){ status.textContent = 'Konnte Entry/SL nicht erkennen.'; status.className = 'muted bad'; return; }
-  status.textContent = `Erkannt: Entry ${parsed.entry} · SL ${parsed.stop}`; status.className = 'muted ok';
+  if(!parsed){
+    status.textContent = 'Konnte Entry/SL nicht erkennen.';
+    status.className = 'muted bad';
+    return;
+  }
+  status.textContent = `Erkannt: Entry ${parsed.entry} · SL ${parsed.stop}`;
+  status.className = 'muted ok';
   const risk = Number(document.getElementById('risk').value || '0');
   const res = compute(parsed.entry, parsed.stop, risk);
-  if(!res){ status.textContent += ' · (Stop liegt nicht unter Ø‑Entry)'; return; }
+  if(!res){
+    status.textContent += ' · (Stop liegt nicht unter Ø-Entry)';
+    return;
+  }
   render(res, parsed.entryDecimals, parsed.stop);
 }
 
@@ -184,12 +215,19 @@ for (const btn of document.querySelectorAll('.copy')){
 }
 
 document.getElementById('copy_all').addEventListener('click', async ()=>{
-  try{ await navigator.clipboard.writeText(document.getElementById('out').value); }catch(e){}
+  try{
+    await navigator.clipboard.writeText(document.getElementById('out').value);
+  }catch(e){}
 });
 
 // UX: Enter im Paste-Feld triggert sofort Parse
 const pasteEl = document.getElementById('paste');
-pasteEl.addEventListener('keydown', (e)=>{ if(e.key==='Enter' && (e.metaKey||e.ctrlKey||!e.shiftKey)){ e.preventDefault(); handleParse(); } });
+pasteEl.addEventListener('keydown', (e)=>{
+  if(e.key==='Enter' && (e.metaKey||e.ctrlKey||!e.shiftKey)){
+    e.preventDefault();
+    handleParse();
+  }
+});
 
 document.getElementById('parse').addEventListener('click', handleParse);
 
@@ -198,4 +236,3 @@ window.addEventListener('load', ()=>{ loadRisk(); });
 </script>
 </body>
 </html>
-
