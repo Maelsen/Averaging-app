@@ -6,13 +6,13 @@
   <title>Averaging-Rechner</title>
   <style>
     :root { --bg:#0b0f14; --card:#121820; --muted:#8aa0b2; --text:#eaf2f9; --accent:#5dd0ff; }
-    html,body{margin:0;height:100%;background:var(--bg);color:var(--text);font:16px/1.4 system-ui,-apple-system,Segoe UI,Roboto,Ubuntu,Cantarell,Noto Sans,Helvetica,Arial; -webkit-text-size-adjust:100%;}
+    html,body{margin:0;height:100%;background:var(--bg);color:var(--text);font:16px/1.4 system-ui,-apple-system,Segoe UI,Roboto,Ubuntu,Cantarell,Noto Sans,Helvetica,Arial; -webkit-text-size-adjust: 100%;}
     .wrap{max-width:680px;margin:0 auto;padding:16px}
     header{display:flex;align-items:center;gap:10px;margin:8px 0 16px}
     header h1{font-size:1.2rem;margin:0}
     .card{background:var(--card);border-radius:16px;box-shadow:0 8px 24px rgba(0,0,0,.35);padding:16px;margin-bottom:12px;border:1px solid rgba(255,255,255,.06)}
     label{display:block;font-size:.85rem;color:var(--muted);margin-bottom:6px}
-    input,textarea{width:100%;box-sizing:border-box;border-radius:12px;border:1px solid rgba(255,255,255,.08);background:#0e131a;color:#fff;padding:12px;outline:none;font-size:16px}
+    input,textarea{width:100%;box-sizing:border-box;border-radius:12px;border:1px solid rgba(255,255,255,.08);background:#0e131a;color:var(--text);padding:12px;outline:none;font-size:16px}
     textarea{min-height:88px}
     input:focus,textarea:focus{border-color:var(--accent);box-shadow:0 0 0 3px rgba(93,208,255,.15)}
     .muted{color:var(--muted);font-size:.9rem}
@@ -22,18 +22,10 @@
     .metric .info{min-width:0}
     .metric .k{color:var(--muted);font-size:.8rem}
     .metric .v{font-size:1.05rem;font-weight:700;margin-top:2px;word-break:break-all}
-    .copy{flex:0 0 auto;border:1px solid rgba(255,255,255,.12);background:#0e131a;color:#fff;border-radius:10px;padding:8px 10px;cursor:pointer}
+    .copy{flex:0 0 auto;border:1px solid rgba(255,255,255,.12);background:#0e131a;color:var(--text);border-radius:10px;padding:8px 10px;cursor:pointer}
+    .ok{color:#6ef797}
+    .bad{color:#ff7b7b}
     .footer{opacity:.7;font-size:.8rem;margin-top:10px}
-    .hide{display:none !important}
-
-    /* Segmented control (Modus) */
-    .seg{display:flex;gap:8px}
-    .seg button{
-      flex:1;border-radius:12px;border:1px solid rgba(255,255,255,.12);
-      background:#0e131a;color:#fff;padding:10px 12px;cursor:pointer;font-weight:600
-    }
-    .seg button.active{background:var(--accent);color:#001019;border-color:transparent}
-    .ok{color:#6ef797}.bad{color:#ff7b7b}
   </style>
 </head>
 <body>
@@ -42,25 +34,19 @@
       <svg width="28" height="28" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
         <path d="M3 3v18h18" stroke="#5dd0ff" stroke-width="2"/><path d="M5 15l4-6 4 3 4-6 3 5" stroke="#5dd0ff" stroke-width="2" fill="none"/>
       </svg>
-      <h1>Averaging-Rechner (50/50 @ Entry & Entry+0,5%)</h1>
+      <h1>Averaging‑Rechner (50/50 @ Entry & Entry+0,5%)</h1>
     </header>
 
-    <!-- Modus & Risiko -->
+    <!-- Risiko (persistiert) -->
     <div class="card">
-      <label>Modus</label>
-      <div class="seg" id="modeSeg">
-        <button type="button" data-mode="multi" class="active">Multi (2 Limits)</button>
-        <button type="button" data-mode="single">Einzeln (1 Limit)</button>
-      </div>
-      <div style="height:10px"></div>
       <label>Gewünschtes Risiko in $ <span class="muted">(bleibt gespeichert, bis du es änderst)</span></label>
       <input id="risk" type="number" inputmode="decimal" step="0.01" value="25" />
     </div>
 
     <!-- QUICK PASTE PARSER -->
     <div class="card">
-      <label>Discord-/Chat-Zeile einfügen (wir erkennen nur Entry & SL, Rest wird ignoriert)</label>
-      <textarea id="paste" placeholder="z. B.: @user longed COAI at 0.4156 sl: 0.388 (1% risk)"></textarea>
+      <label>Discord-/Chat‑Zeile einfügen (wir erkennen nur Entry & SL, Rest wird ignoriert)</label>
+      <textarea id="paste" placeholder="z. B.: @user longed COAI at 0.4156 sl: 0.388 (1% risk)"></textarea>
       <button class="btn" id="parse">Parsen & Berechnen</button>
       <p id="parse_status" class="muted"></p>
       <p class="muted">Erkennung akzeptiert <b>sl:</b> und <b>sl;</b>. Beispiel: <code>longed jelly at 0.061579 sl; 0.05783</code></p>
@@ -69,12 +55,12 @@
     <div class="grid">
       <div class="metric"><div class="info"><div class="k">Limit #1 Preis</div><div class="v" id="m_p1">–</div></div><button class="copy" data-copy="m_p1">Kopieren</button></div>
       <div class="metric"><div class="info"><div class="k">Qty #1</div><div class="v" id="m_q1">–</div></div><button class="copy" data-copy="m_q1">Kopieren</button></div>
-      <div class="metric" id="row_p2"><div class="info"><div class="k">Limit #2 Preis</div><div class="v" id="m_p2">–</div></div><button class="copy" data-copy="m_p2">Kopieren</button></div>
-      <div class="metric" id="row_q2"><div class="info"><div class="k">Qty #2</div><div class="v" id="m_q2">–</div></div><button class="copy" data-copy="m_q2">Kopieren</button></div>
+      <div class="metric"><div class="info"><div class="k">Limit #2 Preis</div><div class="v" id="m_p2">–</div></div><button class="copy" data-copy="m_p2">Kopieren</button></div>
+      <div class="metric"><div class="info"><div class="k">Qty #2</div><div class="v" id="m_q2">–</div></div><button class="copy" data-copy="m_q2">Kopieren</button></div>
     </div>
 
     <div class="card">
-      <label>Order-Details (zum Kopieren)</label>
+      <label>Order‑Details (zum Kopieren)</label>
       <textarea id="out" readonly></textarea>
       <button class="btn" id="copy_all">Alles kopieren</button>
       <p class="footer">Hinweis: Vereinfachtes Modell (keine Slippage/Funding/Partials ≠ 50/50).</p>
@@ -82,130 +68,133 @@
   </div>
 
 <script>
-// ---------- Helpers ----------
-function countDecimalsFromRaw(raw){ const i=raw.indexOf('.'); return i===-1?0:(raw.length-i-1); }
-function fmtPriceByDecimals(n,d){ return Number(n).toFixed(d); }
+// --- Helpers ---
+function countDecimalsFromRaw(raw){
+  const idx = raw.indexOf('.');
+  return idx === -1 ? 0 : (raw.length - idx - 1);
+}
+
+function fmtPriceByDecimals(n, decimals){
+  // Rundet auf die vorgegebene Dezimalzahl und formatiert exakt diese Stellen
+  return Number(n).toFixed(decimals);
+}
+
 function fmtQtySmart(q){
-  const ip = Math.floor(Math.abs(q)); const digits = ip.toString().length;
-  if(digits>=3) return Number(q).toFixed(0);
-  if(digits===2) return Number(q).toFixed(1);
+  const intPart = Math.floor(Math.abs(q));
+  const digits = intPart.toString().length; // 1-stellig: 0..9, 2-stellig: 10..99, 3-stellig: 100+
+  if(digits >= 3) return Number(q).toFixed(0);
+  if(digits === 2) return Number(q).toFixed(1);
   return Number(q).toFixed(2);
 }
-async function copyTextFromEl(id){
-  const el=document.getElementById(id); const txt=el?el.textContent:'';
-  try{ await navigator.clipboard.writeText(txt); }
-  catch(e){ const ta=document.createElement('textarea'); ta.value=txt; document.body.appendChild(ta); ta.select(); document.execCommand('copy'); ta.remove(); }
-}
 
-// ---------- Persistenz ----------
-const RISK_KEY='averaging_risk_usd', MODE_KEY='averaging_mode';
-function loadRisk(){ try{ const v=localStorage.getItem(RISK_KEY); if(v!==null) document.getElementById('risk').value=v; }catch(e){} }
-function saveRisk(){ try{ localStorage.setItem(RISK_KEY, String(document.getElementById('risk').value||'')); }catch(e){} }
-function getMode(){ return document.querySelector('.seg button.active')?.dataset.mode || 'multi'; }
-function setMode(m){ document.querySelectorAll('.seg button').forEach(b=>b.classList.toggle('active', b.dataset.mode===m)); try{ localStorage.setItem(MODE_KEY,m); }catch(e){} }
-function loadMode(){ try{ const v=localStorage.getItem(MODE_KEY); if(v) setMode(v); }catch(e){} }
-
-// ---------- Rechnen ----------
-function compute(entry, stop, risk, mode){
-  if(mode==='single'){
-    const rpu=Math.max(entry-stop,0); if(!(rpu>0)) return null;
-    const qty=risk/rpu; return { p1:entry, p2:null, q1:qty, q2:0 };
+async function copyText(id){
+  const el = document.getElementById(id);
+  const txt = el ? el.textContent : '';
+  try{ await navigator.clipboard.writeText(txt); }catch(e){
+    const ta = document.createElement('textarea');
+    ta.value = txt; document.body.appendChild(ta); ta.select(); document.execCommand('copy'); ta.remove();
   }
-  const p1=entry, p2=entry*1.005, avg=entry*1.0025;
-  const rpu=Math.max(avg-stop,0); if(!(rpu>0)) return null;
-  const qty=risk/rpu; return { p1, p2, q1:qty/2, q2:qty/2 };
 }
 
-// ---------- Parser (robust) ----------
-function stripInvisibles(s){
-  // Versuch mit Unicode-Property (moderne Browser)
-  try { s = s.replace(/[\p{Cf}\p{Mn}]/gu,''); }
-  catch(e){
-    // Fallback: entferne gängige Zero-Width/Format-Zeichen
-    s = s.replace(/[\u00AD\u180E\u200B-\u200F\u202A-\u202E\u2060-\u206F\uFE00-\uFE0F\uFEFF]/g,'');
-  }
-  return s;
+// Risiko lokal persistieren
+const RISK_KEY = 'averaging_risk_usd';
+function loadRisk(){ try{ const v = localStorage.getItem(RISK_KEY); if(v!==null){ document.getElementById('risk').value = v; } }catch(e){} }
+function saveRisk(){ try{ localStorage.setItem(RISK_KEY, String(document.getElementById('risk').value || '')); }catch(e){} }
+
+// Core-Berechnung (50% @ entry, 50% @ entry*1.005)
+function compute(entry, stop, risk){
+  const p1 = entry;
+  const p2 = entry * 1.005;
+  const avg = entry * 1.0025;
+  const riskPerUnit = Math.max(avg - stop, 0);
+  if(!(riskPerUnit>0)) return null;
+  const totalQty = risk / riskPerUnit;
+  const q1 = totalQty / 2;
+  const q2 = totalQty / 2;
+  return { p1, p2, q1, q2 };
 }
-function sanitize(raw){
-  let s = String(raw);
-  s = s.normalize ? s.normalize('NFKC') : s;
-  s = stripInvisibles(s);
-  s = s.replace(/[\u00A0\u202F]/g,' '); // NBSP/NNBSP -> Space
-  s = s.replace(/\s+/g,' ').trim().toLowerCase();
-  return s;
+
+// Parser
+function normalize(raw){ return raw.replace(/
+|
+/g,' ').replace(/,/g,' ').toLowerCase(); }
+function firstNumberAfterRaw(text, anchor){
+  const idx = text.indexOf(anchor);
+  if(idx === -1) return null;
+  for(let i=idx+anchor.length; i<text.length; i++){
+    const ch = text[i];
+    if((ch>='0'&&ch<='9') || ch==='.'){
+      let j=i; while(j<text.length && ((text[j]>='0'&&text[j]<='9')||text[j]==='.')) j++;
+      const raw = text.slice(i,j);
+      return { num: Number(raw), raw };
+    }
+  }
+  return null;
 }
 function parseLine(raw){
   if(!raw) return null;
-  const s = sanitize(raw);
-  const mE = s.match(/(?:^|\s)at\s*([0-9]*\.?[0-9]+)/i);
-  const mS = s.match(/(?:^|\s)sl\s*[:;]?\s*([0-9]*\.?[0-9]+)/i);
-  if(!mE || !mS) return null;
-  const entryNum = Number(mE[1]), stopNum = Number(mS[1]);
-  if(!(entryNum>0 && stopNum>0)) return null;
-  const decs = countDecimalsFromRaw(mE[1]);
-  return { entry: entryNum, entryDecimals: decs, stop: stopNum };
-}
-
-// ---------- Render ----------
-function render(res,decs,stop,mode){
-  const p1=fmtPriceByDecimals(res.p1,decs), q1=fmtQtySmart(res.q1);
-  document.getElementById('m_p1').textContent=p1;
-  document.getElementById('m_q1').textContent=q1;
-  const rowP2=document.getElementById('row_p2'), rowQ2=document.getElementById('row_q2');
-  let out='';
-  if(mode==='single'){
-    rowP2.classList.add('hide'); rowQ2.classList.add('hide');
-    out = `LIMIT: Preis ${p1}, Menge ${q1}\nStop-Loss: ${fmtPriceByDecimals(stop,decs)}`;
-  } else {
-    rowP2.classList.remove('hide'); rowQ2.classList.remove('hide');
-    const p2=fmtPriceByDecimals(res.p2,decs), q2=fmtQtySmart(res.q2);
-    document.getElementById('m_p2').textContent=p2;
-    document.getElementById('m_q2').textContent=q2;
-    out = `LIMIT #1: Preis ${p1}, Menge ${q1}\nLIMIT #2: Preis ${p2}, Menge ${q2}\nStop-Loss: ${fmtPriceByDecimals(stop,decs)}`;
+  const s = normalize(raw);
+  let e = firstNumberAfterRaw(s, ' at ');
+  if(e===null) e = firstNumberAfterRaw(s, 'at ');
+  let slIndex = s.indexOf(' sl');
+  if(slIndex === -1) slIndex = s.indexOf(' sl:');
+  if(slIndex === -1) slIndex = s.indexOf(' sl;');
+  let stop = null;
+  if(slIndex !== -1){
+    const ss = firstNumberAfterRaw(s.slice(slIndex), 'sl') || firstNumberAfterRaw(s.slice(slIndex), 'sl:') || firstNumberAfterRaw(s.slice(slIndex), 'sl;');
+    if(ss) stop = ss.num;
   }
-  document.getElementById('out').value=out;
+  if(!e || !(e.num>0) || !(stop>0)) return null;
+  return { entry: e.num, entryDecimals: countDecimalsFromRaw(e.raw), stop };
 }
 
-// ---------- UI ----------
+function render(res, decimals, stop){
+  const p1 = fmtPriceByDecimals(res.p1, decimals);
+  const p2 = fmtPriceByDecimals(res.p2, decimals);
+  const q1 = fmtQtySmart(res.q1);
+  const q2 = fmtQtySmart(res.q2);
+  document.getElementById('m_p1').textContent = p1;
+  document.getElementById('m_p2').textContent = p2;
+  document.getElementById('m_q1').textContent = q1;
+  document.getElementById('m_q2').textContent = q2;
+  const out = `LIMIT #1: Preis ${p1}, Menge ${q1}
+`+
+              `LIMIT #2: Preis ${p2}, Menge ${q2}
+`+
+              `Stop-Loss: ${fmtPriceByDecimals(stop, decimals)}`;
+  document.getElementById('out').value = out;
+}
+
 function handleParse(){
   saveRisk();
-  const status=document.getElementById('parse_status');
-  const raw=document.getElementById('paste').value;
-  const mode=getMode();
-  const parsed=parseLine(raw);
-  if(!parsed){ status.textContent='Konnte Entry/SL nicht erkennen.'; status.className='muted bad'; return; }
-  status.textContent=`Erkannt: Entry ${parsed.entry} · SL ${parsed.stop} · Modus: ${mode}`; status.className='muted ok';
-  const risk=Number(document.getElementById('risk').value||'0');
-  const res=compute(parsed.entry, parsed.stop, risk, mode);
-  if(!res){ status.textContent+=' · (Risk/Stop-Kombi ungültig)'; return; }
-  render(res, parsed.entryDecimals, parsed.stop, mode);
-}
-function wireCopyButtons(){
-  document.getElementById('copy_all').addEventListener('click', async ()=>{
-    try{ await navigator.clipboard.writeText(document.getElementById('out').value); }catch(e){}
-  });
-  document.querySelectorAll('.copy').forEach(btn=>{
-    btn.addEventListener('click', ()=> copyTextFromEl(btn.getAttribute('data-copy')) );
-  });
-}
-function wireEnterShortcut(){
-  const el=document.getElementById('paste');
-  el.addEventListener('keydown',(e)=>{ if(e.key==='Enter'&&(e.metaKey||e.ctrlKey||!e.shiftKey)){ e.preventDefault(); handleParse(); } });
-}
-function wireModeButtons(){
-  document.getElementById('modeSeg').addEventListener('click',(e)=>{
-    const b=e.target.closest('button[data-mode]'); if(!b) return;
-    setMode(b.dataset.mode);
-  });
+  const status = document.getElementById('parse_status');
+  const raw = document.getElementById('paste').value;
+  const parsed = parseLine(raw);
+  if(!parsed){ status.textContent = 'Konnte Entry/SL nicht erkennen.'; status.className = 'muted bad'; return; }
+  status.textContent = `Erkannt: Entry ${parsed.entry} · SL ${parsed.stop}`; status.className = 'muted ok';
+  const risk = Number(document.getElementById('risk').value || '0');
+  const res = compute(parsed.entry, parsed.stop, risk);
+  if(!res){ status.textContent += ' · (Stop liegt nicht unter Ø‑Entry)'; return; }
+  render(res, parsed.entryDecimals, parsed.stop);
 }
 
-// init
-window.addEventListener('load', ()=>{
-  loadRisk(); loadMode();
-  document.getElementById('risk').addEventListener('change', saveRisk);
-  document.getElementById('parse').addEventListener('click', handleParse);
-  wireCopyButtons(); wireEnterShortcut(); wireModeButtons();
+// Copy-Buttons
+for (const btn of document.querySelectorAll('.copy')){
+  btn.addEventListener('click', ()=> copyText(btn.getAttribute('data-copy')) );
+}
+
+document.getElementById('copy_all').addEventListener('click', async ()=>{
+  try{ await navigator.clipboard.writeText(document.getElementById('out').value); }catch(e){}
 });
+
+// UX: Enter im Paste-Feld triggert sofort Parse
+const pasteEl = document.getElementById('paste');
+pasteEl.addEventListener('keydown', (e)=>{ if(e.key==='Enter' && (e.metaKey||e.ctrlKey||!e.shiftKey)){ e.preventDefault(); handleParse(); } });
+
+document.getElementById('parse').addEventListener('click', handleParse);
+
+// init
+window.addEventListener('load', ()=>{ loadRisk(); });
 </script>
 </body>
 </html>
