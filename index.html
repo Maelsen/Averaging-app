@@ -1,483 +1,196 @@
-
-    :root{
-      --bg: #0b0d10; --panel:#12161b; --soft:#1b2128; --text:#e6edf3; --muted:#9aa7b2; --brand:#7c9cf5; --accent:#13c296; --warn:#ffb347; --danger:#ff6b6b;
-      --br: 16px; --gap: 14px; --pad: 16px; --shadow: 0 10px 30px rgba(0,0,0,.4);
-    }
-    @media (prefers-color-scheme: light){
-      :root{ --bg:#f7f9fc; --panel:#ffffff; --soft:#eef2f7; --text:#0c1116; --muted:#4b5563; --brand:#3556f4; --accent:#069668; --warn:#b78118; --danger:#c23333; }
-    }
-    *{box-sizing:border-box}
-    body{margin:0;background:linear-gradient(120deg,var(--bg),#0f1220 60%,var(--bg));color:var(--text);font:500 16px/1.4 Inter,system-ui,-apple-system,Segoe UI,Roboto,"Helvetica Neue",Arial}
-    a{color:var(--brand);text-decoration:none}
-    .wrap{max-width:1000px;margin:auto;padding:24px}
-    header{display:flex;gap:10px;align-items:center;justify-content:space-between;margin-bottom:16px}
-    .brand{display:flex;gap:12px;align-items:center}
-    .logo{width:36px;height:36px;border-radius:10px;background:radial-gradient(60% 60% at 30% 30%, var(--brand), transparent),radial-gradient(70% 70% at 80% 70%, var(--accent), transparent);box-shadow:0 0 0 1px #0003 inset, var(--shadow)}
-    h1{font-size:20px;margin:0}
-    .card{background:var(--panel);border-radius:var(--br);box-shadow:var(--shadow);border:1px solid #0003}
-    .grid{display:grid;grid-template-columns:1fr;gap:var(--gap)}
-    @media(min-width:860px){.grid{grid-template-columns: 360px 1fr}}
-    .pane{padding:var(--pad)}
-    .section{display:grid;gap:12px}
-    .row{display:grid;gap:10px;grid-template-columns:1fr 1fr}
-    .row-3{display:grid;gap:10px;grid-template-columns:1fr 1fr 1fr}
-    .row-4{display:grid;gap:10px;grid-template-columns:repeat(4,1fr)}
-    label{font-size:12px;color:var(--muted)}
-    input, select{width:100%;padding:12px 12px;border:1px solid #0006;border-radius:12px;background:var(--soft);color:var(--text)}
-    input::placeholder{color:#8898a6}
-    .muted{color:var(--muted)}
-    .controls{display:flex;gap:10px;flex-wrap:wrap}
-    button{appearance:none;border:0;border-radius:12px;padding:12px 16px;font-weight:700;cursor:pointer}
-    .btn{background:var(--brand);color:white}
-    .btn:disabled{opacity:.6;cursor:not-allowed}
-    .btn-ghost{background:transparent;color:var(--text);border:1px solid #ffffff22}
-    .notice{background:#ffffff08;border:1px dashed #ffffff22;border-radius:12px;padding:10px 12px;color:var(--muted);font-size:13px}
-    table{width:100%;border-collapse:separate;border-spacing:0 6px}
-    th, td{text-align:left;padding:10px 12px}
-    thead th{font-size:12px;color:var(--muted);font-weight:600}
-    tbody tr{background:var(--soft);border-radius:10px}
-    tbody tr td:first-child{border-top-left-radius:10px;border-bottom-left-radius:10px}
-    tbody tr td:last-child{border-top-right-radius:10px;border-bottom-right-radius:10px}
-    .kpi{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}
-    @media(min-width:600px){.kpi{grid-template-columns:repeat(4,minmax(0,1fr))}}
-    .kpi .box{background:var(--soft);padding:14px;border-radius:12px}
-    .chip{display:inline-flex;align-items:center;gap:8px;padding:6px 10px;border-radius:999px;background:#ffffff10;border:1px solid #ffffff22;color:var(--muted);font-size:12px}
-    .warn{border-color: #ffb34755;background:#ffb34712;color:var(--warn)}
-    .danger{border-color: #ff6b6b66;background:#ff6b6b12;color:var(--danger)}
-    footer{margin-top:18px;color:var(--muted);font-size:12px}
-    .hidden{display:none}
-    .right{display:flex;gap:10px;align-items:center}
-    .mono{font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace}
+<!doctype html>
+<html lang="de">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no" />
+  <title>Averaging-Rechner</title>
+  <style>
+    :root { --bg:#0b0f14; --card:#121820; --muted:#8aa0b2; --text:#eaf2f9; --accent:#5dd0ff; }
+    html,body{margin:0;height:100%;background:var(--bg);color:var(--text);font:16px/1.4 system-ui,-apple-system,Segoe UI,Roboto,Ubuntu,Cantarell,Noto Sans,Helvetica,Arial; -webkit-text-size-adjust: 100%;}
+    .wrap{max-width:680px;margin:0 auto;padding:16px}
+    header{display:flex;align-items:center;gap:10px;margin:8px 0 16px}
+    header h1{font-size:1.2rem;margin:0}
+    .card{background:var(--card);border-radius:16px;box-shadow:0 8px 24px rgba(0,0,0,.35);padding:16px;margin-bottom:12px;border:1px solid rgba(255,255,255,.06)}
+    label{display:block;font-size:.85rem;color:var(--muted);margin-bottom:6px}
+    input,textarea{width:100%;box-sizing:border-box;border-radius:12px;border:1px solid rgba(255,255,255,.08);background:#0e131a;color:var(--text);padding:12px;outline:none;font-size:16px}
+    textarea{min-height:88px}
+    input:focus,textarea:focus{border-color:var(--accent);box-shadow:0 0 0 3px rgba(93,208,255,.15)}
+    .muted{color:var(--muted);font-size:.9rem}
+    .btn{width:100%;padding:14px 16px;border-radius:12px;border:0;background:var(--accent);color:#001019;font-weight:700;margin-top:8px;cursor:pointer}
+    .grid{display:grid;grid-template-columns:repeat(2,1fr);gap:12px;margin-top:12px}
+    .metric{background:#0f141b;border:1px solid rgba(255,255,255,.06);border-radius:14px;padding:12px;display:flex;justify-content:space-between;align-items:center;gap:8px}
+    .metric .info{min-width:0}
+    .metric .k{color:var(--muted);font-size:.8rem}
+    .metric .v{font-size:1.05rem;font-weight:700;margin-top:2px;word-break:break-all}
+    .copy{flex:0 0 auto;border:1px solid rgba(255,255,255,.12);background:#0e131a;color:var(--text);border-radius:10px;padding:8px 10px;cursor:pointer}
+    .ok{color:#6ef797}
+    .bad{color:#ff7b7b}
+    .footer{opacity:.7;font-size:.8rem;margin-top:10px}
   </style>
 </head>
 <body>
   <div class="wrap">
     <header>
-      <div class="brand">
-        <div class="logo" aria-hidden="true"></div>
-        <div>
-          <h1>Risk Sizer – Equal-Spaced DCA</h1>
-          <div class="muted" style="font-size:13px">Multi (3/4), Single (1), Tareeq (2 @ ±0.5%) – mobilfreundlich</div>
-        </div>
-      </div>
-      <div class="right">
-        <span class="chip">Beta · Client-side only</span>
-        <a class="chip" href="#" id="shareLink">Teilen</a>
-      </div>
+      <svg width="28" height="28" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+        <path d="M3 3v18h18" stroke="#5dd0ff" stroke-width="2"/><path d="M5 15l4-6 4 3 4-6 3 5" stroke="#5dd0ff" stroke-width="2" fill="none"/>
+      </svg>
+      <h1>Averaging‑Rechner (50/50 @ Entry & Entry+0,5%)</h1>
     </header>
 
-    <div class="card grid">
-      <!-- LEFT: Inputs -->
-      <div class="pane section" id="formPane">
-        <div class="row">
-          <div>
-            <label>Modus</label>
-            <select id="mode">
-              <option value="multi">Multi (3/4 Orders)</option>
-              <option value="single">Single (1 Order)</option>
-              <option value="tareeq">Tareeq (2 Orders ±0.5%)</option>
-            </select>
-          </div>
-          <div>
-            <label>Side</label>
-            <select id="side">
-              <option value="long">Long</option>
-              <option value="short">Short</option>
-            </select>
-          </div>
-        </div>
-
-        <!-- Multi specific -->
-        <div id="multiFields" class="section">
-          <div class="row">
-            <div>
-              <label>Entry HIGH</label>
-              <input id="entryHigh" type="number" step="any" placeholder="z. B. 65000" />
-            </div>
-            <div>
-              <label>Entry LOW</label>
-              <input id="entryLow" type="number" step="any" placeholder="z. B. 64000" />
-            </div>
-          </div>
-          <div class="row">
-            <div>
-              <label>Stop</label>
-              <input id="stopMulti" type="number" step="any" placeholder="z. B. 63000" />
-            </div>
-            <div>
-              <label>Risk (USD)</label>
-              <input id="riskMulti" type="number" step="any" placeholder="z. B. 100" />
-            </div>
-          </div>
-          <div class="row">
-            <div>
-              <label>Num Orders</label>
-              <select id="numOrders">
-                <option value="3">3</option>
-                <option value="4">4</option>
-              </select>
-            </div>
-            <div>
-              <label>Qty Step (0 = keine Rundung)</label>
-              <input id="qtyStepMulti" type="number" step="any" placeholder="BTC 0.001 · ETH 0.01 · SOL 0.1" />
-            </div>
-          </div>
-          <div class="row">
-            <div>
-              <label>Rundung</label>
-              <select id="roundModeMulti">
-                <option value="down">down (konservativ)</option>
-                <option value="nearest">nearest</option>
-                <option value="up">up</option>
-              </select>
-            </div>
-            <div class="notice">Verteilung: 3 = 20/35/45 · 4 = 15/25/30/30. Level gleichmäßig verteilt.</div>
-          </div>
-        </div>
-
-        <!-- Single specific -->
-        <div id="singleFields" class="section hidden">
-          <div class="row">
-            <div>
-              <label>Entry</label>
-              <input id="entrySingle" type="number" step="any" placeholder="z. B. 64500" />
-            </div>
-            <div>
-              <label>Stop</label>
-              <input id="stopSingle" type="number" step="any" placeholder="z. B. 64000" />
-            </div>
-          </div>
-          <div class="row">
-            <div>
-              <label>Risk (USD)</label>
-              <input id="riskSingle" type="number" step="any" placeholder="z. B. 100" />
-            </div>
-            <div>
-              <label>Qty Step (0 = keine Rundung)</label>
-              <input id="qtyStepSingle" type="number" step="any" placeholder="BTC 0.001 · ETH 0.01 · SOL 0.1" />
-            </div>
-          </div>
-          <div class="row">
-            <div>
-              <label>Rundung</label>
-              <select id="roundModeSingle">
-                <option value="down">down (konservativ)</option>
-                <option value="nearest">nearest</option>
-                <option value="up">up</option>
-              </select>
-            </div>
-            <div class="notice">Menge aus Entry/Stop/Risk – 1 Order.</div>
-          </div>
-        </div>
-
-        <!-- Tareeq specific -->
-        <div id="tareeqFields" class="section hidden">
-          <div class="row">
-            <div>
-              <label>Entry</label>
-              <input id="entryT" type="number" step="any" placeholder="z. B. 64500" />
-            </div>
-            <div>
-              <label>Stop</label>
-              <input id="stopT" type="number" step="any" placeholder="z. B. 64000" />
-            </div>
-          </div>
-          <div class="row">
-            <div>
-              <label>Risk (USD)</label>
-              <input id="riskT" type="number" step="any" placeholder="z. B. 100" />
-            </div>
-            <div>
-              <label>Qty Step (0 = keine Rundung)</label>
-              <input id="qtyStepT" type="number" step="any" placeholder="BTC 0.001 · ETH 0.01 · SOL 0.1" />
-            </div>
-          </div>
-          <div class="row">
-            <div>
-              <label>Rundung</label>
-              <select id="roundModeT">
-                <option value="down">down (konservativ)</option>
-                <option value="nearest">nearest</option>
-                <option value="up">up</option>
-              </select>
-            </div>
-            <div class="notice">2 Orders 50/50 · Zweite Order bei ±0.5% vom Entry (abhängig von Long/Short).</div>
-          </div>
-        </div>
-
-        <div class="controls">
-          <button id="calcBtn" class="btn">Berechnen</button>
-          <button id="resetBtn" class="btn-ghost">Reset</button>
-        </div>
-
-        <div class="notice">Hinweis qty_step: Mindest-Stückelung des Assets (BTC 0.001 · ETH 0.01 · SOL 0.1 · DOGE/HYPE 1). Alles läuft lokal im Browser.</div>
-      </div>
-
-      <!-- RIGHT: Output -->
-      <div class="pane section">
-        <div class="kpi">
-          <div class="box"><div class="muted">Gewichteter Avg. Entry</div><div class="mono" id="kpiAvg">–</div></div>
-          <div class="box"><div class="muted">Total Qty</div><div class="mono" id="kpiQty">–</div></div>
-          <div class="box"><div class="muted">Requested Risk</div><div class="mono" id="kpiReq">–</div></div>
-          <div class="box"><div class="muted">Actual Risk</div><div class="mono" id="kpiAct">–</div></div>
-        </div>
-
-        <div id="warnBox" class="chip warn hidden">Abweichung &gt; 2% durch Rundung – ggf. Mengen manuell anpassen.</div>
-        <div id="errBox" class="chip danger hidden"></div>
-
-        <h3 class="muted" style="margin:14px 0 6px">Orders</h3>
-        <div class="card" style="background:transparent;border:0;box-shadow:none;padding:0">
-          <table>
-            <thead>
-              <tr>
-                <th>Price</th>
-                <th>Alloc %</th>
-                <th>Qty</th>
-                <th>Notional</th>
-                <th>Risk part</th>
-              </tr>
-            </thead>
-            <tbody id="ordersBody"></tbody>
-          </table>
-        </div>
-      </div>
+    <!-- Risiko (persistiert) -->
+    <div class="card">
+      <label>Gewünschtes Risiko in $ <span class="muted">(bleibt gespeichert, bis du es änderst)</span></label>
+      <input id="risk" type="number" inputmode="decimal" step="0.01" value="25" />
     </div>
 
-    <footer>
-      <div>⚠️ Keine Finanzberatung. Nutze das Tool verantwortungsvoll; insbesondere als Veganer*in ist nachhaltiges, ethisches Investieren wichtig – spekulatives Trading kann hohe Risiken bergen.</div>
-      <div style="margin-top:6px">Tipp: Diese <span class="mono">index.html</span> in ein GitHub Repo legen und via GitHub Pages hosten.</div>
-    </footer>
+    <!-- QUICK PASTE PARSER -->
+    <div class="card">
+      <label>Discord-/Chat‑Zeile einfügen (wir erkennen nur Entry & SL, Rest wird ignoriert)</label>
+      <textarea id="paste" placeholder="z. B.: @user longed COAI at 0.4156 sl: 0.388 (1% risk)"></textarea>
+      <button class="btn" id="parse">Parsen & Berechnen</button>
+      <p id="parse_status" class="muted"></p>
+      <p class="muted">Erkennung akzeptiert <b>sl:</b> und <b>sl;</b>. Beispiel: <code>longed jelly at 0.061579 sl; 0.05783</code></p>
+    </div>
+
+    <div class="grid">
+      <div class="metric"><div class="info"><div class="k">Limit #1 Preis</div><div class="v" id="m_p1">–</div></div><button class="copy" data-copy="m_p1">Kopieren</button></div>
+      <div class="metric"><div class="info"><div class="k">Qty #1</div><div class="v" id="m_q1">–</div></div><button class="copy" data-copy="m_q1">Kopieren</button></div>
+      <div class="metric"><div class="info"><div class="k">Limit #2 Preis</div><div class="v" id="m_p2">–</div></div><button class="copy" data-copy="m_p2">Kopieren</button></div>
+      <div class="metric"><div class="info"><div class="k">Qty #2</div><div class="v" id="m_q2">–</div></div><button class="copy" data-copy="m_q2">Kopieren</button></div>
+    </div>
+
+    <div class="card">
+      <label>Order‑Details (zum Kopieren)</label>
+      <textarea id="out" readonly></textarea>
+      <button class="btn" id="copy_all">Alles kopieren</button>
+      <p class="footer">Hinweis: Vereinfachtes Modell (keine Slippage/Funding/Partials ≠ 50/50).</p>
+    </div>
   </div>
 
 <script>
-  const fmtUSD = new Intl.NumberFormat('en-US',{style:'currency', currency:'USD', maximumFractionDigits:2});
-  const fmtNum = (x, d=8)=> (isFinite(x)? Number(x).toFixed(d): '–');
+// --- Helpers ---
+function countDecimalsFromRaw(raw){
+  const idx = raw.indexOf('.');
+  return idx === -1 ? 0 : (raw.length - idx - 1);
+}
 
-  function roundQty(qty, step, mode){
-    step = Number(step||0);
-    if (step <= 0) return Math.max(0, qty);
-    const unitsRaw = qty/step;
-    let units;
-    if (mode === 'up') units = Math.ceil(unitsRaw - 1e-12);
-    else if (mode === 'nearest') units = Math.round(unitsRaw);
-    else units = Math.floor(unitsRaw + 1e-12); // down
-    return Math.max(0, units * step);
+function fmtPriceByDecimals(n, decimals){
+  // Rundet auf die vorgegebene Dezimalzahl und formatiert exakt diese Stellen
+  return Number(n).toFixed(decimals);
+}
+
+function fmtQtySmart(q){
+  const intPart = Math.floor(Math.abs(q));
+  const digits = intPart.toString().length; // 1-stellig: 0..9, 2-stellig: 10..99, 3-stellig: 100+
+  if(digits >= 3) return Number(q).toFixed(0);
+  if(digits === 2) return Number(q).toFixed(1);
+  return Number(q).toFixed(2);
+}
+
+async function copyText(id){
+  const el = document.getElementById(id);
+  const txt = el ? el.textContent : '';
+  try{ await navigator.clipboard.writeText(txt); }catch(e){
+    const ta = document.createElement('textarea');
+    ta.value = txt; document.body.appendChild(ta); ta.select(); document.execCommand('copy'); ta.remove();
   }
+}
 
-  function computeLevels(entryHigh, entryLow, num){
-    if (![3,4].includes(num)) throw new Error('num_orders must be 3 or 4');
-    const steps = num - 1;
-    const delta = (entryHigh - entryLow)/steps;
-    const arr = [];
-    for (let i=0;i<num;i++) arr.push(entryHigh - i*delta);
-    return arr;
-  }
+// Risiko lokal persistieren
+const RISK_KEY = 'averaging_risk_usd';
+function loadRisk(){ try{ const v = localStorage.getItem(RISK_KEY); if(v!==null){ document.getElementById('risk').value = v; } }catch(e){} }
+function saveRisk(){ try{ localStorage.setItem(RISK_KEY, String(document.getElementById('risk').value || '')); }catch(e){} }
 
-  function allocation(num){
-    return num===3 ? [0.20,0.35,0.45] : [0.15,0.25,0.30,0.30];
-  }
+// Core-Berechnung (50% @ entry, 50% @ entry*1.005)
+function compute(entry, stop, risk){
+  const p1 = entry;
+  const p2 = entry * 1.005;
+  const avg = entry * 1.0025;
+  const riskPerUnit = Math.max(avg - stop, 0);
+  if(!(riskPerUnit>0)) return null;
+  const totalQty = risk / riskPerUnit;
+  const q1 = totalQty / 2;
+  const q2 = totalQty / 2;
+  return { p1, p2, q1, q2 };
+}
 
-  function sizeOrders({entryHigh, entryLow, stop, risk, numOrders, side, qtyStep, roundMode}){
-    const avgEntry = (entryHigh + entryLow)/2;
-    const s = side.toLowerCase();
-    let perUnitRisk = 0;
-    if (s==='long') perUnitRisk = Math.max(0, avgEntry - stop);
-    else if (s==='short') perUnitRisk = Math.max(0, stop - avgEntry);
-    else throw new Error("side must be 'long' or 'short'");
-    if (perUnitRisk <= 0) throw new Error('Stop/entry relationship invalid, per-unit risk <= 0.');
-
-    const totalQty = risk / perUnitRisk;
-    const levelsTopDown = computeLevels(entryHigh, entryLow, numOrders);
-    const pcts = allocation(numOrders);
-
-    const levelsForAlloc = (s==='short') ? [...levelsTopDown].reverse() : levelsTopDown;
-    const rawQtys = pcts.map(p => totalQty * p);
-    const qtys = rawQtys.map(q => roundQty(q, qtyStep, roundMode));
-
-    const orders = [];
-    for (let i=0;i<levelsForAlloc.length;i++){
-      const price = levelsForAlloc[i];
-      const pct = pcts[i];
-      const qty = qtys[i];
-      const notional = price * qty;
-      const riskPart = (s==='long')? (price - stop)*qty : (stop - price)*qty;
-      orders.push({price, pct, qty, notional, risk: riskPart});
-    }
-    const actualQty = orders.reduce((a,o)=>a+o.qty,0);
-    const wavg = actualQty>0 ? orders.reduce((a,o)=>a+o.price*o.qty,0)/actualQty : avgEntry;
-    const actualRisk = orders.reduce((a,o)=>a+o.risk,0);
-    return {orders, wavg, actualQty, actualRisk};
-  }
-
-  function sizeSingle({entry, stop, risk, side, qtyStep, roundMode}){
-    const s = side.toLowerCase();
-    let perUnitRisk = 0;
-    if (s==='long') perUnitRisk = Math.max(0, entry - stop);
-    else if (s==='short') perUnitRisk = Math.max(0, stop - entry);
-    else throw new Error("side must be 'long' or 'short'");
-    if (perUnitRisk <= 0) throw new Error('Stop/entry relationship invalid, per-unit risk <= 0.');
-    const rawQty = risk / perUnitRisk;
-    const qty = roundQty(rawQty, qtyStep, roundMode);
-    const notional = qty * entry;
-    const actualRisk = qty * perUnitRisk;
-    return {qty, notional, actualRisk};
-  }
-
-  function sizeTareeq({entry, stop, risk, side, qtyStep, roundMode}){
-    const s = side.toLowerCase();
-    if (!['long','short'].includes(s)) throw new Error("side must be 'long' or 'short'");
-    const adj = entry * (s==='long' ? 1.005 : 0.995);
-    const avgEntry = 0.5*(entry + adj);
-    const perUnitRisk = (s==='long') ? Math.max(0, avgEntry - stop) : Math.max(0, stop - avgEntry);
-    if (perUnitRisk <= 0) throw new Error('Stop/entry relationship invalid, per-unit risk <= 0.');
-
-    const totalQtyRaw = risk / perUnitRisk;
-    const qEach = roundQty(totalQtyRaw/2, qtyStep, roundMode);
-
-    const orders = [entry, adj].map(price => {
-      const qty = qEach;
-      return {
-        price,
-        pct: 0.50,
-        qty,
-        notional: price*qty,
-        risk: (s==='long')? (price - stop)*qty : (stop - price)*qty
-      };
-    });
-    const actualQty = qEach*2;
-    const wavg = actualQty>0 ? (entry*qEach + adj*qEach)/actualQty : avgEntry;
-    const actualRisk = orders.reduce((a,o)=>a+o.risk,0);
-    return {orders, wavg, actualQty, actualRisk, adj};
-  }
-
-  // UI handlers
-  const $ = (id)=>document.getElementById(id);
-  const modeSel = $('mode');
-  const sections = {multi:$('multiFields'), single:$('singleFields'), tareeq:$('tareeqFields')};
-  modeSel.addEventListener('change', ()=>{
-    const m = modeSel.value;
-    for (const k in sections){ sections[k].classList.toggle('hidden', k!==m); }
-  });
-
-  $('resetBtn').addEventListener('click', ()=>{ location.hash=''; location.reload(); });
-
-  function showError(msg){ const e=$('errBox'); e.textContent=msg; e.classList.remove('hidden'); setTimeout(()=>e.classList.add('hidden'), 6000); }
-  function setKPIs({wavg='–', actualQty='–', req='–', act='–'}){
-    $('kpiAvg').textContent = isFinite(wavg) ? Number(wavg).toFixed(6) : '–';
-    $('kpiQty').textContent = isFinite(actualQty) ? Number(actualQty).toFixed(8) : '–';
-    $('kpiReq').textContent = typeof req==='number' ? fmtUSD.format(req) : '–';
-    $('kpiAct').textContent = typeof act==='number' ? fmtUSD.format(act) : '–';
-  }
-  function fillOrders(orders){
-    const tbody = $('ordersBody');
-    tbody.innerHTML = '';
-    for (const o of orders){
-      const tr = document.createElement('tr');
-      const cells = [o.price.toFixed(6), (o.pct*100).toFixed(1)+'%', o.qty.toFixed(8), fmtUSD.format(o.notional), fmtUSD.format(o.risk)];
-      for (const c of cells){ const td=document.createElement('td'); td.textContent=c; tr.appendChild(td);} tbody.appendChild(tr);
+// Parser
+function normalize(raw){ return raw.replace(/\n|\r/g,' ').replace(/,/g,' ').toLowerCase(); }
+function firstNumberAfterRaw(text, anchor){
+  const idx = text.indexOf(anchor);
+  if(idx === -1) return null;
+  for(let i=idx+anchor.length; i<text.length; i++){
+    const ch = text[i];
+    if((ch>='0'&&ch<='9') || ch==='.'){
+      let j=i; while(j<text.length && ((text[j]>='0'&&text[j]<='9')||text[j]==='.')) j++;
+      const raw = text.slice(i,j);
+      return { num: Number(raw), raw };
     }
   }
-  function warnIfDeviation(requested, actual){
-    const box = $('warnBox');
-    if (!requested || requested<=0){ box.classList.add('hidden'); return; }
-    const dev = Math.abs(actual - requested)/Math.max(1, requested);
-    box.classList.toggle('hidden', !(dev>0.02));
+  return null;
+}
+function parseLine(raw){
+  if(!raw) return null;
+  const s = normalize(raw);
+  let e = firstNumberAfterRaw(s, ' at ');
+  if(e===null) e = firstNumberAfterRaw(s, 'at ');
+  let slIndex = s.indexOf(' sl');
+  if(slIndex === -1) slIndex = s.indexOf(' sl:');
+  if(slIndex === -1) slIndex = s.indexOf(' sl;');
+  let stop = null;
+  if(slIndex !== -1){
+    const ss = firstNumberAfterRaw(s.slice(slIndex), 'sl') || firstNumberAfterRaw(s.slice(slIndex), 'sl:') || firstNumberAfterRaw(s.slice(slIndex), 'sl;');
+    if(ss) stop = ss.num;
   }
+  if(!e || !(e.num>0) || !(stop>0)) return null;
+  return { entry: e.num, entryDecimals: countDecimalsFromRaw(e.raw), stop };
+}
 
-  function readNumber(id){ const v = parseFloat($(id).value); return isFinite(v)? v : NaN; }
+function render(res, decimals, stop){
+  const p1 = fmtPriceByDecimals(res.p1, decimals);
+  const p2 = fmtPriceByDecimals(res.p2, decimals);
+  const q1 = fmtQtySmart(res.q1);
+  const q2 = fmtQtySmart(res.q2);
+  document.getElementById('m_p1').textContent = p1;
+  document.getElementById('m_p2').textContent = p2;
+  document.getElementById('m_q1').textContent = q1;
+  document.getElementById('m_q2').textContent = q2;
+  const out = `LIMIT #1: Preis ${p1}, Menge ${q1}\n`+
+              `LIMIT #2: Preis ${p2}, Menge ${q2}\n`+
+              `Stop-Loss: ${fmtPriceByDecimals(stop, decimals)}`;
+  document.getElementById('out').value = out;
+}
 
-  function saveToHash(obj){ location.hash = '#'+btoa(unescape(encodeURIComponent(JSON.stringify(obj)))); }
-  function loadFromHash(){ try{ if(location.hash.length>1){ return JSON.parse(decodeURIComponent(escape(atob(location.hash.slice(1))))); } }catch{} return null; }
+function handleParse(){
+  saveRisk();
+  const status = document.getElementById('parse_status');
+  const raw = document.getElementById('paste').value;
+  const parsed = parseLine(raw);
+  if(!parsed){ status.textContent = 'Konnte Entry/SL nicht erkennen.'; status.className = 'muted bad'; return; }
+  status.textContent = `Erkannt: Entry ${parsed.entry} · SL ${parsed.stop}`; status.className = 'muted ok';
+  const risk = Number(document.getElementById('risk').value || '0');
+  const res = compute(parsed.entry, parsed.stop, risk);
+  if(!res){ status.textContent += ' · (Stop liegt nicht unter Ø‑Entry)'; return; }
+  render(res, parsed.entryDecimals, parsed.stop);
+}
 
-  function currentInputs(){
-    const side = $('side').value;
-    const mode = $('mode').value;
-    const common = {side};
-    if (mode==='multi'){
-      return {mode, ...common,
-        entryHigh: readNumber('entryHigh'), entryLow: readNumber('entryLow'), stop: readNumber('stopMulti'), risk: readNumber('riskMulti'), numOrders: parseInt($('numOrders').value,10), qtyStep: readNumber('qtyStepMulti')||0, roundMode: $('roundModeMulti').value
-      };
-    }
-    if (mode==='single'){
-      return {mode, ...common,
-        entry: readNumber('entrySingle'), stop: readNumber('stopSingle'), risk: readNumber('riskSingle'), qtyStep: readNumber('qtyStepSingle')||0, roundMode: $('roundModeSingle').value
-      };
-    }
-    // tareeq
-    return {mode, ...common,
-      entry: readNumber('entryT'), stop: readNumber('stopT'), risk: readNumber('riskT'), qtyStep: readNumber('qtyStepT')||0, roundMode: $('roundModeT').value
-    };
-  }
+// Copy-Buttons
+for (const btn of document.querySelectorAll('.copy')){
+  btn.addEventListener('click', ()=> copyText(btn.getAttribute('data-copy')) );
+}
 
-  function applyState(state){
-    if (!state) return;
-    $('mode').value = state.mode || 'multi';
-    $('side').value = state.side || 'long';
-    modeSel.dispatchEvent(new Event('change'));
-    if (state.mode==='multi'){
-      $('entryHigh').value = state.entryHigh ?? '';
-      $('entryLow').value  = state.entryLow ?? '';
-      $('stopMulti').value = state.stop ?? '';
-      $('riskMulti').value = state.risk ?? '';
-      $('numOrders').value = String(state.numOrders ?? 3);
-      $('qtyStepMulti').value = state.qtyStep ?? '';
-      $('roundModeMulti').value = state.roundMode || 'down';
-    } else if (state.mode==='single'){
-      $('entrySingle').value = state.entry ?? '';
-      $('stopSingle').value  = state.stop ?? '';
-      $('riskSingle').value  = state.risk ?? '';
-      $('qtyStepSingle').value = state.qtyStep ?? '';
-      $('roundModeSingle').value = state.roundMode || 'down';
-    } else {
-      $('entryT').value = state.entry ?? '';
-      $('stopT').value  = state.stop ?? '';
-      $('riskT').value  = state.risk ?? '';
-      $('qtyStepT').value = state.qtyStep ?? '';
-      $('roundModeT').value = state.roundMode || 'down';
-    }
-  }
+document.getElementById('copy_all').addEventListener('click', async ()=>{
+  try{ await navigator.clipboard.writeText(document.getElementById('out').value); }catch(e){}
+});
 
-  $('calcBtn').addEventListener('click', ()=>{
-    try{
-      const s = currentInputs();
-      saveToHash(s);
-      $('errBox').classList.add('hidden');
+// UX: Enter im Paste-Feld triggert sofort Parse
+const pasteEl = document.getElementById('paste');
+pasteEl.addEventListener('keydown', (e)=>{ if(e.key==='Enter' && (e.metaKey||e.ctrlKey||!e.shiftKey)){ e.preventDefault(); handleParse(); } });
 
-      if (s.mode==='multi'){
-        if ([s.entryHigh, s.entryLow, s.stop, s.risk].some(x=>!isFinite(x))) throw new Error('Bitte alle Felder ausfüllen.');
-        const res = sizeOrders({entryHigh:s.entryHigh, entryLow:s.entryLow, stop:s.stop, risk:s.risk, numOrders:s.numOrders, side:s.side, qtyStep:s.qtyStep, roundMode:s.roundMode});
-        setKPIs({wavg:res.wavg, actualQty:res.actualQty, req:s.risk, act:res.actualRisk});
-        fillOrders(res.orders);
-        warnIfDeviation(s.risk, res.actualRisk);
-      } else if (s.mode==='single'){
-        if ([s.entry, s.stop, s.risk].some(x=>!isFinite(x))) throw new Error('Bitte alle Felder ausfüllen.');
-        const r = sizeSingle(s);
-        setKPIs({wavg:s.entry, actualQty:r.qty, req:s.risk, act:r.actualRisk});
-        fillOrders([{price:s.entry, pct:1.0, qty:r.qty, notional:r.notional, risk:r.actualRisk}]);
-        warnIfDeviation(s.risk, r.actualRisk);
-      } else {
-        if ([s.entry, s.stop, s.risk].some(x=>!isFinite(x))) throw new Error('Bitte alle Felder ausfüllen.');
-        const r = sizeTareeq(s);
-        setKPIs({wavg:r.wavg, actualQty:r.actualQty, req:s.risk, act:r.actualRisk});
-        fillOrders(r.orders);
-        warnIfDeviation(s.risk, r.actualRisk);
-      }
-    }catch(err){ showError(err.message || String(err)); }
-  });
+document.getElementById('parse').addEventListener('click', handleParse);
 
-  // Share current state
-  $('shareLink').addEventListener('click', (e)=>{
-    e.preventDefault();
-    try{
-      const u = new URL(location.href);
-      u.hash = location.hash;
-      navigator.clipboard.writeText(u.toString());
-      const a=e.target; a.textContent='Link kopiert!'; setTimeout(()=>a.textContent='Teilen',1500);
-    }catch{}
-  });
-
-  // init from hash if present
-  applyState(loadFromHash());
+// init
+window.addEventListener('load', ()=>{ loadRisk(); });
 </script>
 </body>
 </html>
